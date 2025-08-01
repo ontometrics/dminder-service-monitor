@@ -1,0 +1,32 @@
+name: Weather Services
+services:
+  # Apple WeatherKit (requires JWT auth)
+  - id: weatherkit-availability
+    name: Apple WeatherKit Availability
+    url: https://weatherkit.apple.com/api/v1/availability/34.4/-118.33
+    checks:
+      - type: status
+        expected: 401  # We expect 401 without auth, which means service is up
+      - type: response_time
+        max_ms: 2000
+    
+  # ForecastIO/Dark Sky (legacy service, may be deprecated)
+  - id: forecastio
+    name: Forecast.io Weather API
+    url: https://api.forecast.io/forecast/d5ab38b96cc03b75c63bef8dc4c5762e/34.4,-118.33?exclude=minutely,hourly,alerts,flags
+    checks:
+      - type: status
+        expected: 200
+        acceptable: [200, 403]  # 403 if API key invalid
+      - type: response_time
+        max_ms: 2000
+      - type: json_path
+        path: $.daily.data[0].uvIndex
+        min: 0
+        max: 15
+    
+  # Whatever weather service you decide to use
+  - id: weatherapi-com
+    name: WeatherAPI.com (Alternative)
+    url: https://api.weatherapi.com/v1/current.json?key=test&q=34.4,-118.33
+    skip_reason: "Not currently used - placeholder for future migration"

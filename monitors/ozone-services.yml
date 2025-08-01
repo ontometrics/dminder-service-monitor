@@ -1,0 +1,46 @@
+name: Ozone Services
+services:
+  # NOAA S3 buckets used by NOAADataFetcher
+  - id: noaa-s3-noaa20
+    name: NOAA-20 S3 Bucket
+    url: https://noaa-omps.s3.amazonaws.com/NOAA-20/AGGREGATED_OZONE_2024_001.nc
+    checks:
+      - type: status
+        expected: 200  # Or 403 if we're just checking bucket exists
+        acceptable: [200, 403]
+      - type: response_time
+        max_ms: 5000
+    
+  - id: noaa-s3-noaa21
+    name: NOAA-21 S3 Bucket
+    url: https://noaa-omps.s3.amazonaws.com/NOAA-21/AGGREGATED_OZONE_2024_001.nc
+    checks:
+      - type: status
+        expected: 200
+        acceptable: [200, 403]
+      - type: response_time
+        max_ms: 5000
+    
+  - id: noaa-s3-snpp
+    name: Suomi-NPP S3 Bucket
+    url: https://noaa-omps.s3.amazonaws.com/SNPP/AGGREGATED_OZONE_2024_001.nc
+    checks:
+      - type: status
+        expected: 200
+        acceptable: [200, 403]
+      - type: response_time
+        max_ms: 5000
+    
+  # Legacy dminder ozone service (forecast.io based)
+  - id: dminder-ozone-api
+    name: dminder Ozone API
+    url: https://api.forecast.io/ozone/34.4,-118.33?api_key=d5ab38b96cc03b75c63bef8dc4c5762e
+    checks:
+      - type: status
+        expected: 200
+      - type: response_time
+        max_ms: 2000
+      - type: json_path
+        path: $.currently.ozoneValue
+        min: 200
+        max: 600

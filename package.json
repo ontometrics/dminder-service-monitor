@@ -1,0 +1,29 @@
+{
+  "name": "dminder-service-monitor",
+  "version": "1.0.0",
+  "description": "Service monitoring for dminder external dependencies",
+  "main": "scripts/check-service.js",
+  "scripts": {
+    "test": "node scripts/check-service.js monitors/ozone-services.yml",
+    "check-all": "npm run check-ozone && npm run check-weather",
+    "check-ozone": "node scripts/check-service.js monitors/ozone-services.yml",
+    "check-weather": "node scripts/check-service.js monitors/weather-services.yml"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ontometrics/dminder-service-monitor.git"
+  },
+  "keywords": [
+    "monitoring",
+    "dminder",
+    "uptime"
+  ],
+  "author": "Ontometrics",
+  "license": "MIT",
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  }
+}

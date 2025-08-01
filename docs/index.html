@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dminder Service Status</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .service-group {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .service {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .service:last-child {
+            border-bottom: none;
+        }
+        .status-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+        .status-up { background: #4CAF50; }
+        .status-down { background: #F44336; }
+        .status-unknown { background: #FFC107; }
+        .service-name {
+            flex: 1;
+            font-weight: 500;
+        }
+        .response-time {
+            color: #666;
+            font-size: 14px;
+        }
+        .last-updated {
+            text-align: center;
+            color: #666;
+            margin-top: 20px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #333;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>dminder Service Status</h1>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="uptime-percentage">--</div>
+                <div class="stat-label">Uptime (30d)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="services-up">--</div>
+                <div class="stat-label">Services Up</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avg-response">--</div>
+                <div class="stat-label">Avg Response Time</div>
+            </div>
+        </div>
+
+        <div class="service-group">
+            <h2>Ozone Services</h2>
+            <div id="ozone-services">
+                <div class="service">
+                    <div class="status-icon status-unknown"></div>
+                    <div class="service-name">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="service-group">
+            <h2>Weather Services</h2>
+            <div id="weather-services">
+                <div class="service">
+                    <div class="status-icon status-unknown"></div>
+                    <div class="service-name">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="last-updated">
+            Last updated: <span id="last-updated">--</span>
+        </div>
+    </div>
+
+    <script>
+        async function loadStatus() {
+            try {
+                const response = await fetch('status.json');
+                const data = await response.json();
+                updateDashboard(data);
+            } catch (error) {
+                console.error('Failed to load status:', error);
+            }
+        }
+
+        function updateDashboard(data) {
+            // Update stats
+            document.getElementById('uptime-percentage').textContent = 
+                data.stats.uptimePercentage.toFixed(1) + '%';
+            document.getElementById('services-up').textContent = 
+                `${data.stats.servicesUp}/${data.stats.totalServices}`;
+            document.getElementById('avg-response').textContent = 
+                data.stats.averageResponseTime + 'ms';
+
+            // Update services
+            updateServiceGroup('ozone-services', data.services.ozone);
+            updateServiceGroup('weather-services', data.services.weather);
+
+            // Update timestamp
+            document.getElementById('last-updated').textContent = 
+                new Date(data.lastUpdated).toLocaleString();
+        }
+
+        function updateServiceGroup(elementId, services) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = '';
+
+            services.forEach(service => {
+                const serviceEl = document.createElement('div');
+                serviceEl.className = 'service';
+                
+                const statusClass = service.status === 'up' ? 'status-up' : 
+                                   service.status === 'down' ? 'status-down' : 'status-unknown';
+                
+                serviceEl.innerHTML = `
+                    <div class="status-icon ${statusClass}"></div>
+                    <div class="service-name">${service.name}</div>
+                    <div class="response-time">${service.responseTime || '--'}ms</div>
+                `;
+                
+                container.appendChild(serviceEl);
+            });
+        }
+
+        // Load status on page load
+        loadStatus();
+        
+        // Refresh every minute
+        setInterval(loadStatus, 60000);
+    </script>
+</body>
+</html>

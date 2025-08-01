@@ -1,0 +1,7 @@
+node_modules/
+*.log
+.env
+.env.local
+check-results.json
+results/
+.DS_Store

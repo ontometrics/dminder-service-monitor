@@ -1,0 +1,63 @@
+name: Monitor Services
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'  # Every 15 minutes
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  check-services:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Check Ozone Services
+      id: ozone
+      run: |
+        node scripts/check-service.js monitors/ozone-services.yml
+      continue-on-error: true
+    
+    - name: Check Weather Services
+      id: weather
+      run: |
+        node scripts/check-service.js monitors/weather-services.yml
+      continue-on-error: true
+    
+    - name: Save Results
+      run: |
+        mkdir -p results
+        cp check-results.json results/results-$(date +%Y%m%d-%H%M%S).json
+    
+    - name: Update Dashboard
+      run: |
+        node scripts/update-dashboard.js
+    
+    - name: Upload Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: monitoring-results
+        path: results/
+        retention-days: 30
+    
+    - name: Deploy Dashboard
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs
+    
+    - name: Send Alerts
+      if: steps.ozone.outcome == 'failure' || steps.weather.outcome == 'failure'
+      run: |
+        node scripts/send-alerts.js
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
